@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -17,8 +18,15 @@ export default function Header() {
   return (
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/listings" className="text-lg font-semibold text-stone-900">
-          Bulk eBay Comic Lister
+        <Link href="/listings" className="flex items-center gap-2 text-lg font-semibold text-stone-900">
+          <Image
+            src="/comic-listing-hero.png"
+            alt=""
+            width={48}
+            height={29}
+            className="rounded object-cover"
+          />
+          <span>Bulk eBay Comic Lister</span>
         </Link>
         <nav className="flex items-center gap-6">
           <Link

@@ -1,9 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-stone-100 to-stone-200 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-stone-100 to-stone-200 px-4 py-12">
       <main className="max-w-2xl text-center">
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/comic-listing-hero.png"
+            alt="eBay Comic Listing"
+            width={400}
+            height={240}
+            className="rounded-xl shadow-lg"
+            priority
+          />
+        </div>
         <h1 className="mb-4 text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
           Bulk eBay Comic Lister
         </h1>

@@ -1,14 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import SearchForm from "./SearchForm";
+import SortSelect from "./SortSelect";
 import ExportButton from "./ExportButton";
+import NotListedOnlyCheckbox from "./NotListedOnlyCheckbox";
 
 export default async function ListingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; not_listed_only?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, sort, not_listed_only } = await searchParams;
+  const notListedOnly = not_listed_only !== "0";
   const supabase = await createClient();
   const {
     data: { user },
@@ -35,15 +38,36 @@ export default async function ListingsPage({
       )
     `
     )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .eq("user_id", user.id);
+
+  if (notListedOnly) {
+    query = query.is("listed_date", null);
+  }
+
+  if (sort === "oldest") {
+    query = query.order("created_at", { ascending: true });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
 
   if (q && q.trim()) {
     const term = `%${q.trim()}%`;
     query = query.or(`issuenumber.ilike.${term},listing.ilike.${term}`);
   }
 
-  const { data: listings, error } = await query;
+  const { data: rawListings, error } = await query;
+
+  const listings =
+    rawListings && (sort === "name" || sort === "name_desc")
+      ? [...rawListings].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+          const aSeries = a.series as Record<string, unknown> | null;
+          const bSeries = b.series as Record<string, unknown> | null;
+          const aName = `${aSeries?.seriesname ?? ""} #${a.issuenumber ?? ""}`;
+          const bName = `${bSeries?.seriesname ?? ""} #${b.issuenumber ?? ""}`;
+          const cmp = aName.localeCompare(bName);
+          return sort === "name_desc" ? -cmp : cmp;
+        })
+      : rawListings;
 
   if (error) {
     return (
@@ -57,7 +81,9 @@ export default async function ListingsPage({
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-stone-900">My Listings</h1>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-4">
+          <NotListedOnlyCheckbox checked={notListedOnly} />
+          <SortSelect value={(sort === "name" || sort === "name_desc" || sort === "oldest") ? sort : "newest"} />
           <SearchForm defaultValue={q ?? ""} />
           <ExportButton />
           <Link
@@ -69,6 +95,9 @@ export default async function ListingsPage({
         </div>
       </div>
 
+      <p className="mb-2 text-xs text-stone-500">
+        {listings?.length ?? 0} Listing{(listings?.length ?? 0) !== 1 ? "s" : ""}
+      </p>
       {!listings || listings.length === 0 ? (
         <div className="rounded-xl border border-stone-200 bg-white p-12 text-center text-stone-500">
           {q ? (
