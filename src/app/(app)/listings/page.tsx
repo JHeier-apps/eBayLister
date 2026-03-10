@@ -50,14 +50,9 @@ export default async function ListingsPage({
     query = query.order("created_at", { ascending: false });
   }
 
-  if (q && q.trim()) {
-    const term = `%${q.trim()}%`;
-    query = query.or(`issuenumber.ilike.${term},listing.ilike.${term}`);
-  }
-
   const { data: rawListings, error } = await query;
 
-  const listings =
+  const rawSorted =
     rawListings && (sort === "name" || sort === "name_desc")
       ? [...rawListings].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
           const aSeries = a.series as Record<string, unknown> | null;
@@ -68,6 +63,16 @@ export default async function ListingsPage({
           return sort === "name_desc" ? -cmp : cmp;
         })
       : rawListings;
+
+  const listings = q?.trim()
+    ? rawSorted?.filter((l: Record<string, unknown>) => {
+        const series = l.series as Record<string, unknown> | null;
+        const publisher = series?.publisher as Record<string, unknown> | null;
+        const haystack = [series?.seriesname, publisher?.publishername, l.issuenumber, l.listing]
+          .filter(Boolean).join(" ").toLowerCase();
+        return q.trim().toLowerCase().split(/\s+/).every(word => haystack.includes(word));
+      })
+    : rawSorted;
 
   if (error) {
     return (
@@ -95,9 +100,9 @@ export default async function ListingsPage({
         </div>
       </div>
 
-      <p className="mb-2 text-xs text-stone-500">
-        {listings?.length ?? 0} Listing{(listings?.length ?? 0) !== 1 ? "s" : ""}
-      </p>
+      <h4 className="mb-2 ml-4 text-blue-600">
+        {listings?.length ?? 0} Listing(s)
+      </h4>
       {!listings || listings.length === 0 ? (
         <div className="rounded-xl border border-stone-200 bg-white p-12 text-center text-stone-500">
           {q ? (
