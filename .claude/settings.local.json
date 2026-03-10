@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /d/Projects/Courses/eBayLister/src/app/\\\\\\(app\\\\\\)/series/)"
+    ]
+  }
+}

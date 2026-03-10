@@ -24,7 +24,7 @@ export default function SeriesList({
   const [series, setSeries] = useState(initialSeries);
   const [newPublisher, setNewPublisher] = useState("");
   const [newSeriesName, setNewSeriesName] = useState("");
-  const [newSeriesPublisher, setNewSeriesPublisher] = useState(initialPublishers[0]?.id ?? "");
+  const [newSeriesPublisher, setNewSeriesPublisher] = useState("");
   const [newSeriesYear, setNewSeriesYear] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +32,13 @@ export default function SeriesList({
   async function addPublisher(e: React.FormEvent) {
     e.preventDefault();
     if (!newPublisher.trim()) return;
+    const duplicate = publishers.some(
+      (p) => p.publishername.toLowerCase() === newPublisher.trim().toLowerCase()
+    );
+    if (duplicate) {
+      setError("A publisher with that name already exists.");
+      return;
+    }
     setLoading(true);
     setError(null);
     const supabase = createClient();
@@ -54,6 +61,18 @@ export default function SeriesList({
   async function addSeries(e: React.FormEvent) {
     e.preventDefault();
     if (!newSeriesName.trim() || !newSeriesPublisher) return;
+    const publisherId = newSeriesPublisher === "none" ? null : newSeriesPublisher;
+    const selectedPublisher = publishers.find((p) => p.id === newSeriesPublisher);
+    const duplicate = series.some(
+      (s) =>
+        s.seriesname.toLowerCase() === newSeriesName.trim().toLowerCase() &&
+        (s.publisher?.publishername?.toLowerCase() ?? null) === (selectedPublisher?.publishername?.toLowerCase() ?? null) &&
+        (s.starting_year ?? null) === (newSeriesYear ? Number(newSeriesYear) : null)
+    );
+    if (duplicate) {
+      setError("A series with the same name, publisher, and year already exists.");
+      return;
+    }
     setLoading(true);
     setError(null);
     const supabase = createClient();
@@ -61,7 +80,7 @@ export default function SeriesList({
       .from("series")
       .insert({
         seriesname: newSeriesName.trim(),
-        publisher_id: newSeriesPublisher,
+        publisher_id: publisherId,
         starting_year: newSeriesYear ? Number(newSeriesYear) : null,
       })
       .select("id, seriesname, starting_year, publisher(publishername)")
@@ -106,15 +125,18 @@ export default function SeriesList({
         </form>
       </div>
 
-      <div className="rounded-xl border border-stone-200 bg-white p-6">
-        <h3 className="mb-4 font-medium text-stone-800">Add Series</h3>
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-stone-800">Comic Series</h2>
+
+        <div className="rounded-xl border border-stone-200 bg-white p-6">
+          <h3 className="mb-4 font-medium text-stone-800">Add Comic Series</h3>
         <form onSubmit={addSeries} className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row">
             <input
               type="text"
               value={newSeriesName}
               onChange={(e) => setNewSeriesName(e.target.value)}
-              placeholder="Series name"
+              placeholder="Comic Series name"
               required
               className="flex-1 rounded-lg border border-stone-300 px-4 py-2 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
@@ -124,7 +146,8 @@ export default function SeriesList({
               required
               className="rounded-lg border border-stone-300 px-4 py-2 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
-              <option value="">Select publisher...</option>
+              <option value="" disabled>-- Select Publisher --</option>
+              <option value="none">No Publisher</option>
               {publishers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.publishername}
@@ -146,13 +169,14 @@ export default function SeriesList({
             disabled={loading || !newSeriesName.trim()}
             className="rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700 disabled:opacity-50"
           >
-            Add Series
+            Add Comic Series
           </button>
         </form>
+        </div>
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-white">
-        <h3 className="border-b border-stone-100 p-4 font-medium text-stone-800">
+        <h3 className="rounded-t-xl border-b border-stone-200 bg-stone-100 p-4 font-medium text-stone-800">
           All Publishers
         </h3>
         <ul className="divide-y divide-stone-100">
@@ -169,8 +193,8 @@ export default function SeriesList({
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-white">
-        <h3 className="border-b border-stone-100 p-4 font-medium text-stone-800">
-          All Series
+        <h3 className="rounded-t-xl border-b border-stone-200 bg-stone-100 p-4 font-medium text-stone-800">
+          All Comic Series
         </h3>
         <ul className="divide-y divide-stone-100">
           {series.length === 0 ? (
