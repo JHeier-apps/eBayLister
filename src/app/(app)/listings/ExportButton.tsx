@@ -37,7 +37,7 @@ export default function ExportButton() {
       return;
     }
 
-    const headers = ["Series", "Issue", "Publisher", "Year", "Listing", "Listed Date"];
+    const headers = ["Comic Series", "Issue", "Publisher", "Year", "Listing", "Listed Date"];
     const rows = listings.map((l: Record<string, unknown>) => {
       const s = l.series as Record<string, unknown> | null;
       const p = s?.publisher as Record<string, unknown> | null;

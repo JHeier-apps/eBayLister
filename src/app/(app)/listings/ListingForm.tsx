@@ -95,7 +95,7 @@ export default function ListingForm({
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-stone-700">
-            Series
+            Comic Series
           </label>
           <div className="flex gap-2">
             <select

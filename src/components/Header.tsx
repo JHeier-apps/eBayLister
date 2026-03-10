@@ -45,7 +45,7 @@ export default function Header() {
             href="/series"
             className="text-sm font-medium text-stone-600 hover:text-stone-900"
           >
-            Series
+            Comic Series
           </Link>
           <button
             onClick={handleLogout}
